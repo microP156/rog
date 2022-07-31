@@ -12,8 +12,8 @@ class Grad:
         else:
             return getattr(self.p.grad, name)
 
-
-class Parameter(object):
+a = torch.Tensor([1,2,3])
+class Parameter(torch.Tensor):
     '''
     Wrapper that enables retriving part (determined by position) of the data and gradient of a parameter,
         while other attributes of the parameter remains.

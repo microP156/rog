@@ -21,6 +21,7 @@ import subprocess
 from DEFSGDM.DEFSGDM import compress_cost, decompress_cost
 import numpy as np
 from read_bandwidth import get_bandwidth
+from torch.optim.lr_scheduler import MultiStepLR
 import logging
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 # from tqdm import tqdm
@@ -67,36 +68,35 @@ def freeze_bn(m):
         m.training = False
         m.track_running_stats = True
 
+
 class Parameter_Server:
-    def __init__(self, args, ps_ip, ps_port, world_size, threshold,
-            model, optimizer, communication_library, device,
-            batch_size, chkpt_dir, FLOWN_enable=False, compression_enable=True):
-        self.world_size = world_size
-        self.threshold = threshold
+    def __init__(self, args, model, communication_library, device, optimizer, compression_enable=True):
+        self.world_size = args.world_size -1
+        self.threshold = args.threshold
         self.model = model
         self.gathered_weight = mp.Queue(maxsize=1000)
         self.lock = threading.Lock()
-        self.training_step=[0 for _ in range(world_size)]
-        self.stall_time = [AverageMeter() for _ in range(world_size)]
-        self.stall_num = [0 for _ in range(world_size)]
-        self.min_step = [mp.Queue(maxsize=1) for i in range(world_size)]
+        self.training_step=[0 for _ in range(self.world_size)]
+        self.stall_time = [AverageMeter() for _ in range(self.world_size)]
+        self.stall_num = [0 for _ in range(self.world_size)]
+        self.min_step = [mp.Queue(maxsize=1) for _ in range(self.world_size)]
         self.communication_library=communication_library
         self.device = device
-        self.FLOWN_enable = FLOWN_enable
+        self.FLOWN_enable = args.FLOWN_enable
         self.COMPRESSION = compression_enable
         if self.COMPRESSION:
             assert self.communication_library == 'tcp'
         self.updated = True
         self.recved = True
         self.optimizer = optimizer
-        logging.info(f"Threshold {threshold}")
-        logging.info(f"FLOWN_enabled {FLOWN_enable}")
+        logging.info(f"Threshold {self.threshold}")
+        logging.info(f"FLOWN_enabled {self.FLOWN_enable}")
         logging.info(f"COMPRESSION_enabled {compression_enable}")
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind((ps_ip, ps_port))
-        sock.listen(world_size)
-        self.chkpt_dir = chkpt_dir
+        sock.bind((args.ps_ip, args.ps_port))
+        sock.listen(self.world_size)
+        self.chkpt_dir = args.chkpt_dir
 
         self._stop_event = threading.Event()
         proc = []
@@ -106,8 +106,8 @@ class Parameter_Server:
         self.isupdated = []
         # [[computation & compression time, sleep time, batchsize] * world_size]
         self.sleep_time_lock = threading.Lock()
-        self.computation_compression = np.zeros([world_size, 3])
-        for _ in range(world_size):
+        self.computation_compression = np.zeros([self.world_size, 3])
+        for _ in range(self.world_size):
             self.isupdated.append(mp.Queue(maxsize=10))
         if not self.COMPRESSION:
             t = threading.Thread(target=self.parameter_server_optimizer, args=(optimizer,), daemon=True)
@@ -116,7 +116,7 @@ class Parameter_Server:
         self.client_addresses = []
         self.worker_bw = np.array([0.]*8)
         client_streams = []
-        for i in range(world_size):
+        for i in range(self.world_size):
             client_sock, client_address = sock.accept()
             client_stream = TCPMessageStream(client_sock)
             t = threading.Thread(target=self.each_parameter_server,args=(client_stream,client_address,i), daemon=True)
@@ -282,11 +282,12 @@ class Parameter_Server:
 
                 stime = time.time()
                 with self.lock:
-                    logging.info(f'{rank}, {self.training_step}, before; compress {compress_cost.avg:.2E}; decompress {decompress_cost.avg:.2E} stall time avg:, {[round(t.avg,2) for t in self.stall_time]}, {round(sum([t.avg for t in self.stall_time])/len(self.stall_time),2)}, sum:, {[round(t.sum,2) for t in self.stall_time]}, stall num, {self.stall_num}')
+                    logging.info(f'{rank}, {self.training_step}, before; compress {compress_cost.avg:.2E}; decompress {decompress_cost.avg:.2E}')
                     before = min(self.training_step)
                     self.training_step[rank] += 1
                     now = min(self.training_step)
                     logging.info(f'{rank}, {self.training_step}, after')
+                    logging.info(f"IMPORTANT stall time avg:, {[round(t.avg,2) for t in self.stall_time]}, {round(sum([t.avg for t in self.stall_time])/len(self.stall_time),2)}, sum:, {[round(t.sum,2) for t in self.stall_time]}")
                 if not self.COMPRESSION:
                     msg = self.isupdated[rank].get()
                     assert msg == "ok"
@@ -325,9 +326,6 @@ class Parameter_Server:
                     self.transmitting_idxes.get()
                 self.recved = True
                 # print(f'Fine Recv parameters from client {rank}')
-            if msg == "finish":
-                logging.info(f'{rank} finish one epoch.')
-                client_stream.send(pickle.dumps("ok"))
             if msg == "terminate":
                 if not self.COMPRESSION:
                     self.gathered_weight.put((None,None,None))
@@ -379,18 +377,13 @@ class Parameter_Server:
                 period *= 3
 
 class Local_Worker:
-    def __init__(self, args, model, ps_ip, ps_port, criterion,
-        communication_library, train_loader, test_loader, device, lr_scheduler, optimizer, mixup_fn, compression_enable=True):
+    def __init__(self, args, model, communication_library, device, optimizer, compression_enable=True):
 
         self.args = args
-        self.criterion = criterion
-        self.train_loader = train_loader
-        self.test_loader = test_loader
+        self.threshold = args.threshold
         self.communication_library = communication_library
         self.device = device
         self.model = model
-        self.lr_scheduler = lr_scheduler
-        self.mixup_fn = mixup_fn
         self.optimizer = optimizer
         self.COMPRESSION = compression_enable
         self.t_communication = AverageMeter()
@@ -408,13 +401,14 @@ class Local_Worker:
         logging.info('Warm up complete')
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         time.sleep(1) # waiting for ps start
-        sock.connect((ps_ip, ps_port))
+        sock.connect((args.ps_ip, args.ps_port))
         self.sock = TCPMessageStream(sock)
         logging.info("conneted to parameter server")
         msg = self.sock.recv()
         self.rank = pickle.loads(msg)
         logging.info(f"All workers ready, my rank is {self.rank}")
         logging.info(self.optimizer.defaults)
+        self.gpu_running = AverageMeter()
 
         self._stop_event = threading.Event()
         self.checkpoint_thread = None
@@ -428,6 +422,13 @@ class Local_Worker:
         #     print("Checkpoint will be handled here.")
         #     self.checkpoint_thread = threading.Thread(target=self.checkpoint_per_period, args=(), daemon=True)
         #     self.checkpoint_thread.start()
+        
+    def set_adapt_noise(self,train_dl, criterion, mixup_fn):
+        self.train_loader = train_dl
+        self.criterion=criterion
+        self.mixup_fn=mixup_fn
+        self.lr_scheduler=MultiStepLR(self.optimizer, milestones=[800,1600,2400,3200], gamma=0.5)
+
 
     def read_bandwidth_thread(self):
         while True:
@@ -458,7 +459,7 @@ class Local_Worker:
         # print("complete",flush=True)
         return end-start
 
-    def push_update(self, iteration):
+    def push_update(self):
         # print("start push update",flush=True)
         if self.COMPRESSION:
             data = self.optimizer.compress()
@@ -486,31 +487,30 @@ class Local_Worker:
         assert msg == 'ok'
         end = time.time()
 
-        # for p in self.model.parameters():
-        #     p.grad = torch.zeros_like(p.grad)
-        # print("complete",flush=True)
         return end - start
 
     def terminate(self):
         logging.info('Worker terminated.')
         self.sock.send(pickle.dumps("terminate"))
         self._stop_event.set()
+    def push_and_pull(self):
+        push_update_time = self.push_update()
+        pull_model_time=self.pull_model()
+        return push_update_time,pull_model_time
 
-    def train(self, epoch, start_time, num_updates, lr, local_update, warm_up=False, warm_up_iter=20):
+    def train(self, local_update):
         # bar = Bar('Processing', max=len(self.train_loader))
-        start = time.time()
-        top1 = AverageMeter()
-        losses = self.losses
+
         self.model.train()
         self.model.apply(freeze_bn)
-        self.lr = lr
-        batchsize = self.train_loader.batch_size
+
         itered = 0
-        iteration = 0
         all_iters = len(self.train_loader)
         loader = iter(self.train_loader)
         finish = False
+        self.batchsize = local_update * self.train_loader.batch_size
         while itered < all_iters:
+            start = time.time()
             self.lock.acquire()
             for _ in range(local_update):
                 try:
@@ -525,84 +525,24 @@ class Local_Worker:
                 output = self.model(images)
                 loss = self.criterion(output, targets)
                 loss.backward()
-                losses.update(loss.item(), images.size(0))
+                self.losses.update(loss.item(), images.size(0))               
+            self.training_step += 1
             end = time.time()
+            if finish:
+                break
             self.t_computation.update(end - start)
-            if warm_up:
-                self.lock.release()
-                warm_up_iter -= 1
-                if warm_up_iter <= 0:
-                    self.t_communication.reset()
-                    self.t_computation.reset()
-                    compress_cost.reset()
-                    decompress_cost.reset()
-                    self.optimizer.init_state()
-                    return 0., 0.
-                else:
-                    sign, param_groups = self.optimizer.compress()
-                    self.optimizer.decompress_store(sign, param_groups)
-                    logging.info(f"\nWarmup worker{self.rank} compress:{compress_cost.val:.2E} decompress:{decompress_cost.val:.2E}")
-                    logging.info(f"batchsize:{local_update * batchsize} comp:{end - start:.2f} avg_comp:{self.t_computation.avg:.2f}")
-                    start = time.time()
-                    continue
-            iteration += 1
             if self.sleep_time > 0.:
                 time.sleep(self.sleep_time)
-            self.training_step += 1
-            push_update_time = self.push_update(epoch)
-            pull_model_time = self.pull_model()
+            self.gpu_running.update(time.time()-start)
+            push_update_time, pull_model_time = self.push_and_pull()
             for p in self.model.parameters():
                 p.grad.zero_()
-            self.batchsize = local_update * batchsize
-            num_updates += 1
             self.lr_scheduler.step()
             self.lock.release()
             self.t_communication.update(pull_model_time + push_update_time)
-            if self.training_step < 5 and self.sleep_time == 0.:
-                logging.info('Start sleep.')
-                self.sleep_time = 20 - (self.t_computation.val + compress_cost.val + decompress_cost.val)
-                if self.sleep_time > 0:
-                    time.sleep(self.sleep_time)
-            logging.info(f"Iteration {self.training_step} worker{self.rank} comm:{pull_model_time + push_update_time:.2f}s avg_comm:{self.t_communication.avg:.2f}s compress:{compress_cost.avg:.2E} decompress:{decompress_cost.avg:.2E}")
-            logging.info(f"batchsize: {local_update * batchsize} comp:{end - start:.2f}s avg_comp:{self.t_computation.avg:.2f}s sleep:{self.sleep_time:.2f} total compute+compress+sleep:{self.t_computation.val + compress_cost.val + decompress_cost.val + self.sleep_time:.2f}")
-            logging.info(f"loss: {losses.val:.2f} loss avg: {losses.avg:.2f} scale avg send {self.optimizer.send_scale_monitor.avg:.2E} avg recv: {self.optimizer.recv_scale_monitor.avg:.2E} lr {self.lr_scheduler.get_last_lr()}\n")
-            
-            start = time.time()
-            if itered > 0:
-                self.lr = None
-            if finish:
-                break
-        self.sock.send(pickle.dumps("finish"))
-        msg = pickle.loads(self.sock.recv())
-        assert msg == 'ok'
-        return losses.avg, num_updates
-
-    def validate(self, epoch,start_time):
-        # switch to evaluate mode
-        self.model.eval()
-        self.model.to(self.device)
-        with torch.no_grad():
-            correct = 0
-            for x, y in self.test_loader:
-                x, y = x.to(self.device), y.to(self.device)
-                output = self.model(x)
-                _, top_id = output.max(1)
-                correct += torch.sum(top_id == y)
-            correct_rate = correct / (len(self.test_loader) * self.args.batchsize)
-            print(f'{epoch} epoch accuracy: {correct_rate}')
-        return correct_rate
-
-    def checkpoint_per_period(self, period=120, decay_step=20):
-        step = 1
-        start = time.time()
-        while True:
-            if self._stop_event.is_set():
-                return
-            # with self.lock:
-            torch.save(self.model.state_dict(), f'{self.args.chkpt_dir}/{time.time() - start:8.2f}-{self.training_step}.chkpt')
-            sleep_time = period - (time.time() - start) % period    # sleep till next minute
-
-            time.sleep(sleep_time)
-            step += 1
-            if step % decay_step == 0:
-                period *= 2
+            logging.info(f"Iteration {self.training_step} worker{self.rank}") 
+            logging.info(f"communication: {pull_model_time + push_update_time:.2f}; avg {self.t_communication.avg:.2f}; sum {self.t_communication.sum:.2f} compress: {compress_cost.avg:.2E} decompress: {decompress_cost.avg:.2E}")
+            logging.info(f"computation: {self.t_computation.val:.2f}; avg {self.t_computation.avg:.2f}; sum {self.t_computation.sum:.2f}; sleep:{self.sleep_time:.2f} total compute+compress+sleep: {self.t_computation.val + compress_cost.val + decompress_cost.val + self.sleep_time:.2f}")
+            logging.info(f"GPU running time: {self.gpu_running.val:.2f}; avg: {self.gpu_running.avg:.2f}; sum {self.gpu_running.sum:.2f}")
+            logging.info(f"loss: {self.losses.val:.2f} loss avg: {self.losses.avg:.2f}\n")
+        return self.losses.avg

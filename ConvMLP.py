@@ -426,7 +426,7 @@ class ConvMLP:
             interpolation=train_interpolation,
             mean=data_config['mean'],
             std=data_config['std'],
-            num_workers=args.workers,
+            num_workers=1,
             distributed=args.distributed,
             collate_fn=collate_fn,
             pin_memory=args.pin_mem,
