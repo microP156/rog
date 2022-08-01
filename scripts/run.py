@@ -29,7 +29,7 @@ hosts = [
     '10.42.0.3',
 ]
 leader_ip = '10.42.0.1'
-nic_names = ['wls1', 'wlx0013ef6f0c49', 'wlan0', 'wlan0', 'wlx0013ef5f09a3']
+wnic_names = ['wls1', 'wlx0013ef6f0c49', 'wlan0', 'wlan0', 'wlx0013ef5f09a3']
 hosts = [f'user@{host}' for host in hosts]
 hosts_set = list(sorted(set(hosts), key=hosts.index))  # remove duplicate but keep the order
 passward = "useruser"
@@ -131,10 +131,10 @@ while rerun:
 
     server_log = None
     for idx, host in enumerate(hosts):
-        exec_docker(host, f'tc qdisc del dev {nic_names[idx]} root')
+        exec_docker(host, f'tc qdisc del dev {wnic_names[idx]} root')
         exec_docker(host, f'cd /home/work/MICRO22-AE && \
-            export GLOO_SOCKET_IFNAME={nic_names[idx]} && \
-            python3 -u adapt_noise_ssp.py --noise-type mixed --epochs {epoch} -b {batch_size[idx]} -E {E[idx]} --idx-start {sum(idx_num[1:idx])} --idx-num {idx_num[idx]} --chkpt-dir {chkpt_dir} --chkpt-rank {chkpt_worker_idx} --world-size {len(hosts)} --wnic-name {nic_names[idx]} --rank {idx} --dist-url tcp://{leader_ip}:46666 --threshold={threshold} {library_arg} {compression_arg}>> {log_dir}/worker_{idx}.log 2>&1')
+            export GLOO_SOCKET_IFNAME={wnic_names[idx]} && \
+            python3 -u adapt_noise_ssp.py --noise-type mixed --epochs {epoch} -b {batch_size[idx]} -E {E[idx]} --idx-start {sum(idx_num[1:idx])} --idx-num {idx_num[idx]} --chkpt-dir {chkpt_dir} --chkpt-rank {chkpt_worker_idx} --world-size {len(hosts)} --wnic-name {wnic_names[idx]} --rank {idx} --dist-url tcp://{leader_ip}:46666 --threshold={threshold} {library_arg} {compression_arg}>> {log_dir}/worker_{idx}.log 2>&1')
         if idx == 0:
             server_log = f'{log_dir}/worker_{idx}.log'
         time.sleep(0.5)
@@ -144,13 +144,13 @@ while rerun:
         print('starting bandwidth replay')
         for idx, host in enumerate(hosts):
             if idx == 0:
-                exec_docker(hosts[idx], f'cd /home/work/MICRO22-AE/scripts && bash ./limit_bandwidth.sh {nic_names[idx]}')
+                exec_docker(hosts[idx], f'cd /home/work/MICRO22-AE/scripts && bash ./limit_bandwidth.sh {wnic_names[idx]}')
                 continue
             mode = 'leader' if idx == 0 else 'worker'
             exec_docker(hosts[idx], f'cd /home/work/MICRO22-AE/scripts && python3 -u replay_bandwidth.py {bw_record} {mode} {idx+2} > ../{log_dir}/bw_replay-{idx}.txt 2>&1')
     else:
         for idx, host in enumerate(hosts):
-            exec_docker(hosts[idx], f'cd /home/work/MICRO22-AE/scripts && bash ./limit_bandwidth.sh {nic_names[idx]}')
+            exec_docker(hosts[idx], f'cd /home/work/MICRO22-AE/scripts && bash ./limit_bandwidth.sh {wnic_names[idx]}')
 
     for idx, host in enumerate(hosts):
         exec_docker(host, f'cd /home/work/MICRO22-AE/scripts && python3 -u record_energy.py 0.5 > ../{log_dir}/energy-{idx}.txt 2>&1')
