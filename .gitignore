@@ -5,7 +5,6 @@ __pycache__/
 launch.json
 # C extensions
 *.so
-result/
 # Distribution / packaging
 .Python
 build/
@@ -131,4 +130,5 @@ verifiy.py.lprof
 energy_src/
 adapt_noise_ssp_energy.py
 scripts/run_energy.py
-figure/
+# figure/
+# result/

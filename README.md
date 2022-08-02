@@ -21,7 +21,7 @@ And it also ensures reproducibility of the results as well as reliability of the
 Since our artifact evaluation requires configuring many devices, to ease the burden of configuring, we provide access to a well-prepared environment (a cluster with 2 PC, 1 laptop and 2 NVIDIA Jetson Xavier NX and the devices we provide
 are stationary and being charged) via a ZeroTier network during artifact evaluation. 
 
-Please feel free to connect with us via **micro2022p156@gmail.com** to get access to our ZeroTier network. 
+Please feel free to contact us via **micro2022p156@gmail.com** to get access to our ZeroTier network. 
 
 After joining our ZeroTier network, you can access the devices we used by ssh commands.
 
@@ -73,10 +73,10 @@ Available options are:
   - execute `python3 scripts/redraw_smooth.py threshold-case0` and figures will be generated in `./figure/` as `threshold-case0-*.pdf`
 ```
 #threshold-case0
-07-29-18-05-ROG-4-outdoors
-07-29-19-22-ROG-20-outdoors
-07-29-20-10-ROG-30-outdoors
-07-29-20-59-ROG-40-outdoors
+06-28-02-20-ROG-4-outdoors
+06-29-04-41-ROG-20-outdoors
+06-29-21-47-ROG-30-outdoors
+06-30-17-14-ROG-40-outdoors
 ```
 ## REFERENCES
 
