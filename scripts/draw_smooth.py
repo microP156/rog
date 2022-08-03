@@ -139,7 +139,7 @@ if local_path == []:
     exit(0)
 unique_idx = 0
 while True:
-    if f"{case_name}-{unique_idx}" in existing_case:
+    if f"{case_name}-case{unique_idx}" in existing_case:
         unique_idx += 1
         continue
     f.writelines(f"#{case_name}-case{unique_idx}\n")
