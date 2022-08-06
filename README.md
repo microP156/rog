@@ -49,6 +49,13 @@ For each subfolder in `./result/` folder, the inside folder `./chkpt/` stores th
 Then, the accuracies of all checkpoint models will be tested and stored in `accuracy.csv` via `python3 ./scripts/test_checkpoints_on_server.py`.
 At the end of each evaluation item, figures concluding the results will be drawn automatically in the `./figure/` folder.
 
+**We also provide the `./scripts/draw_microevent.py` script for drawing Figure 8 in our paper.**
+The `./scripts/draw_microevent.py` script takes three parameters: the location of the ROG experiment results to be drawn, rank of the device to be drawn, the start time.
+The rank can only be a positive integer, because the device whose rank is 0 is the parameter server, and the starting time is needed because the whole experiment will take 5,000 seconds or more, so it will be hard to see the details in whole figure.
+So, the `python3 ./scripts/draw_microevent.py ./result/06-28-02-20-ROG-4-outdoors 1 300` command
+will draw the micro-event on the device whose rank is 1 after 300 seconds.
+**You may need to adjust the device rank and the start time several times until you have a clear and easy-to-understand figure, like Figure 8 in our paper.**
+
 If the user accidentally terminates the command `bash run_all.sh` or wants to restart the half-run experiments, please delete the result folders of the experiments that have been executed in `./result` folder or comment out the commands that have already been executed in `run_all.sh` to avoid confusion with later experiment results.
 ### Customization Settings
 To view available settings, run `python3 scripts/run.py --help` and change the parameters of `python3 scripts/run.py  ...` in `run_all.sh`.
@@ -56,9 +63,8 @@ To view available settings, run `python3 scripts/run.py --help` and change the p
 Available options are:
 
 ```
---library   TEXT      Distributed training system used for ML training
+--library   TEXT      Distributed training system used for ML training. Only three options: BSP, SSP and ROG.
 --threshold INTEGER   Threshold for BSP, SSP, and ROG. Especially 0 for BSP.
-                      
 --control   TEXT      Type of real-world bandwidth replayed. Only two options: outdoors and indoors.
 --batchsize INTEGER   The multiple of default batchsize. 
 --epoch     INTEGER   Number of epochs to train.
@@ -78,12 +84,14 @@ Available options are:
 06-29-21-47-ROG-30-outdoors
 06-30-17-14-ROG-40-outdoors
 ```
-### Due to the uncertainty of the training process, the drawn curve may fluctuate. For example, in the case of `06-29-21-47-ROG-30-outdoors`, if you want to re-run this experiment, you need to execute the following command step by step:
+### **Due to the uncertainty of the training process, the drawn curve may fluctuate. For example, in the case of `06-29-21-47-ROG-30-outdoors`, if you want to re-run this experiment, you need to execute the following command step by step:**
 - Run `python3 script/run.py ...`, which is the command generated `06-29-21-47-ROG-30-outdoors` in `run_all.sh`.
 - Run `python3 scripts/test_checkpoints_on_server.py` to test the accuracy of the checkpoint models.
+You can execute the first step multiple times, and then execute the second step only once.
 - Find new experiment result in `result/` folder, like `xx-xx-xx-xx-ROG-30-outdoors`.
 - Modify the folder location in `experiment_records.txt` as follows.
 - Run `python3 scripts/redraw_smooth.py threshold-case0` to redraw figures.
+- **In addition, you can also achieve smoother, but also much slower, convergence curves by lowering the learning rate (modify the `lr` in both line 29 in `ROG_optim.py` and line 21 in `SSP_optim.py` from `1e-6` to `1e-7`) or disabling the momentum of SGD optimization algorithm (set the `momentum` to `0.` in line 147 in `./DEFSGDM/DEFSGDM.py`).**
 ```
 #threshold-case0
 06-28-02-20-ROG-4-outdoors

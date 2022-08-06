@@ -13,6 +13,8 @@ local_dic = "result/"
 worker = "3"
 window = 25
 existing_case = []
+paper = {"outdoors1":"Figure1(a)","outdoors2":"Figure1(b)","outdoors3":"Figure1(c)","outdoors4":"Figure1(d)","batchsize1":"Figure9(e)",
+         "batchsize3":"Figure9(a)","batchsize4":"Figure9(c)","threshold2":"Figure10(b)","threshold3":"Figure10(a)"}
 def read_csv(path):
     file_path=os.path.join(path, "accuracy.csv")
     with open(file_path, 'r') as f:
@@ -181,8 +183,8 @@ if case_name == "indoors" or case_name == "outdoors" or case_name == "batchsize"
     plt.ylabel("Seconds")
     plt.xlim(-0.5,len(legends)-0.5)
     plt.legend(bbox_to_anchor=(1.05, 1),loc=2,borderaxespad=0,labelspacing=1)
-    plt.savefig(f'./figure/{case_name}-case{unique_idx}-average-time-composition.pdf')
-    print(f"drawing ./figure/{case_name}-case{unique_idx}-average-time-composition.pdf")
+    plt.savefig(f'./figure/{case_name}-case{unique_idx}-average-time-composition-{paper[case_name+str(1)]}.pdf')
+    print(f"drawing ./figure/{case_name}-case{unique_idx}-average-time-composition-{paper[case_name+str(1)]}.pdf")
 #%%
 mpl.rcParams.update({"font.size":16,"figure.autolayout":True})
 max_x=[]
@@ -201,8 +203,8 @@ if case_name == "indoors" or case_name == "outdoors" or case_name=="threshold":
     plt.ylim(52,max(70,max(max_y)+1))
     plt.xlim(0,max(1000,min(max_x)))
     plt.xlabel("Iteration")
-    plt.savefig(f'./figure/{case_name}-case{unique_idx}-statistical-efficiency.pdf')
-    print(f"drawing ./figure/{case_name}-case{unique_idx}-statistical-efficiency.pdf")
+    plt.savefig(f'./figure/{case_name}-case{unique_idx}-statistical-efficiency-{paper[case_name+str(2)]}.pdf')
+    print(f"drawing ./figure/{case_name}-case{unique_idx}-statistical-efficiency-{paper[case_name+str(2)]}.pdf")
 #%%
 from matplotlib.pyplot import MultipleLocator
 plt.figure()
@@ -228,8 +230,8 @@ for i in range(int(max_x/1800)):
     plt.vlines(1800*(i+1), 50, 100,linestyle='--',color="black")
 plt.xlim(0,max_x)
 plt.ylim(52,max(70,max(max_y)+1))
-plt.savefig(f'./figure/{case_name}-case{unique_idx}-training-accuracy-against-wall-clock-time.pdf')
-print(f"drawing ./figure/{case_name}-case{unique_idx}-training-accuracy-against-wall-clock-time.pdf")
+plt.savefig(f'./figure/{case_name}-case{unique_idx}-training-accuracy-against-wall-clock-time-{paper[case_name+str(3)]}.pdf')
+print(f"drawing ./figure/{case_name}-case{unique_idx}-training-accuracy-against-wall-clock-time-{paper[case_name+str(3)]}.pdf")
 #%%
 if case_name == "indoors" or case_name == "outdoors" or case_name == "batchsize":
     max_x=[]
@@ -248,6 +250,6 @@ if case_name == "indoors" or case_name == "outdoors" or case_name == "batchsize"
     plt.hlines(64, 0, 100000,linestyle='--',color="black")
     plt.ylim(52,max(70,max(max_y)+1))
     plt.xlim(0,max(50000,min(max_x)))
-    plt.savefig(f'./figure/{case_name}-case{unique_idx}-energy-consumption-against-training-accuracy.pdf')
-    print(f"drawing ./figure/{case_name}-case{unique_idx}-energy-consumption-against-training-accuracy.pdf")
+    plt.savefig(f'./figure/{case_name}-case{unique_idx}-energy-consumption-against-training-accuracy-{paper[case_name+str(4)]}.pdf')
+    print(f"drawing ./figure/{case_name}-case{unique_idx}-energy-consumption-against-training-accuracy-{paper[case_name+str(4)]}.pdf")
 # %%

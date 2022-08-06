@@ -174,12 +174,12 @@ while rerun:
             cleanup()
             break
         else:
-            time.sleep(180)
+            time.sleep(1800)
             if line == last_line:
                 rerun=True
-                print("restart this case")
+                print("may restart this case")
                 cleanup()
-                exec_local(f"rm -rf {result_dir}",block=True)
+                # exec_local(f"rm -rf {result_dir}",block=True)
                 break
             last_line = line
 # for p in subps:
