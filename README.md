@@ -47,18 +47,18 @@ enabled): `bash run_all.sh`.
 `experiment_records.txt` will record all experiments performed, and raw evaluation results will be generated in the `./result/` folder.
 For each subfolder in `./result/` folder, the inside folder `./chkpt/` stores the checkpoint models for each evaluation and `./log/` folder stores all the experiment log records.  
 Then, the accuracies of all checkpoint models will be tested and stored in `accuracy.csv` via `python3 ./scripts/test_checkpoints_on_server.py`.
-At the end of each evaluation item, figures concluding the results will be drawn automatically in the `./figure/` folder.
+At the end of each evaluation item, Figure 1, Figure 9, and Figure 10 in our paper will be drawn automatically in the `./figure/` folder.
 
 **We also provide the `./scripts/draw_microevent.py` script for drawing Figure 8 in our paper.**
 The `./scripts/draw_microevent.py` script takes three parameters: the location of the ROG experiment results to be drawn, rank of the device to be drawn, the start time.
-The rank can only be a positive integer, because the device whose rank is 0 is the parameter server, and the starting time is needed because the whole experiment will take 5,000 seconds or more, so it will be hard to see the details in whole figure.
+The rank can only be a positive integer, because the device whose rank is 0 is the parameter server, and the start time is needed because the whole experiment will take 5,000 seconds or more, so it will be hard to see the details in the whole figure.
 So, the `python3 ./scripts/draw_microevent.py ./result/06-28-02-20-ROG-4-outdoors 1 300` command
 will draw the micro-event on the device whose rank is 1 after 300 seconds.
-**You may need to adjust the device rank and the start time several times until you have a clear and easy-to-understand figure, like Figure 8 in our paper.**
+**You may need to adjust the device rank and the start time several times until you have a figure that is as clear and informative as Figure 8 in our paper.**
 
 If the user accidentally terminates the command `bash run_all.sh` or wants to restart the half-run experiments, please delete the result folders of the experiments that have been executed in `./result` folder or comment out the commands that have already been executed in `run_all.sh` to avoid confusion with later experiment results.
 ### Customization Settings
-To view available settings, run `python3 scripts/run.py --help` and change the parameters of `python3 scripts/run.py  ...` in `run_all.sh`.
+To view available settings, run `python3 scripts/run.py --help` and change the parameters of `python3 scripts/run.py  ...` in `run_all.sh`. For example, you can evaluate end-to-end results in the indoor environment (Figure 6) by changing the command line argument of 'outdoors' to 'indoors' in run_all.sh.
 
 Available options are:
 
@@ -75,7 +75,7 @@ Available options are:
 -  Default batchsizes were set to ensure the same computation time on heterogeneous devices. If all worker devices are homogeneous, please set all elements in the `batch_size` in `./scripts/run.py` to any same integer in line 41.
 - The users can redraw the result figures via `./scripts/redraw_smooth.py`. The specific usage is as follows:
   - Check `experiment_records.txt` to find which case to redraw. 
-  - For an example, `experiment_Records.txt` is shown below:
+  - For an example, `experiment_records.txt` is shown below:
   - Run `python3 scripts/redraw_smooth.py threshold-case0` and figures will be generated in `./figure/` as `threshold-case0-*.pdf`
 ```
 #threshold-case0
@@ -84,14 +84,15 @@ Available options are:
 06-29-21-47-ROG-30-outdoors
 06-30-17-14-ROG-40-outdoors
 ```
-### **Due to the uncertainty of the training process, the drawn curve may fluctuate. For example, in the case of `06-29-21-47-ROG-30-outdoors`, if you want to re-run this experiment, you need to execute the following command step by step:**
+### **Because we are using momentum to accelerate training (otherwise convergence would take days of time), randomness in training process (especially at the beginning) would be inevitably introduced by the training algorithm and bring a drop in training accuracy at the beginning.**
+For fair comparison, we recommend running each case multiple times and selected those without such drop at the beginning.
+If you want to re-run a specific experiment, such as `06-29-21-47-ROG-30-outdoors`, you need to execute the following command step by step:
 - Run `python3 script/run.py ...`, which is the command generated `06-29-21-47-ROG-30-outdoors` in `run_all.sh`.
 - Run `python3 scripts/test_checkpoints_on_server.py` to test the accuracy of the checkpoint models.
 You can execute the first step multiple times, and then execute the second step only once.
-- Find new experiment result in `result/` folder, like `xx-xx-xx-xx-ROG-30-outdoors`.
-- Modify the folder location in `experiment_records.txt` as follows.
+- Find the new experiment result folder in `result/` folder, like `xx-xx-xx-xx-ROG-30-outdoors`.
+- Replace the folder location in `experiment_records.txt` as follows.
 - Run `python3 scripts/redraw_smooth.py threshold-case0` to redraw figures.
-- **In addition, you can also achieve smoother, but also much slower, convergence curves by lowering the learning rate (modify the `lr` in both line 29 in `ROG_optim.py` and line 21 in `SSP_optim.py` from `1e-6` to `1e-7`) or disabling the momentum of SGD optimization algorithm (set the `momentum` to `0.` in line 147 in `./DEFSGDM/DEFSGDM.py`).**
 ```
 #threshold-case0
 06-28-02-20-ROG-4-outdoors
