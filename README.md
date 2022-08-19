@@ -53,15 +53,7 @@ If the user accidentally terminates the command `bash run_all.sh` or wants to re
 At the end of each evaluation item, Figure 1, Figure 9, and Figure 10 in our paper will be drawn automatically in the `./figure/` folder via `./scripts/draw_smooth.py` used in `run_all.sh`.
 The `./scripts/draw_smooth.py` script takes one parameter: the scenario of the executed experiment items, like `outdoors` or `indoors`.
 We do not recommend executing `./scripts/draw_smooth.py` separately, because this file will also record the executed experiment record under the same scenario in `experiment_records.txt`.
-
-**We also provide the `./scripts/draw_microevent.py` script for drawing Figure 8 in our paper.**
-The `./scripts/draw_microevent.py` script takes three parameters: the location of the ROG experiment results to be drawn, rank of the device to be drawn, the start time.
-The rank can only be a positive integer, because the device whose rank is 0 is the parameter server, and the start time is needed because the whole experiment will take 5,000 seconds or more, so it will be hard to see the details in the whole figure.
-So, the `python3 ./scripts/draw_microevent.py ./result/06-28-02-20-ROG-4-outdoors 1 300` command
-will draw the micro-event on the device whose rank is 1 after 300 seconds.
-**You may need to adjust the device rank and the start time several times until you have a figure that is as clear and informative as Figure 8 in our paper.**
-
-The users can redraw the result figures via `./scripts/redraw_smooth.py`. 
+Instead, the users can redraw the result figures via `./scripts/redraw_smooth.py`. 
 The specific usage is as follows:
   - Check `experiment_records.txt` to find which case to redraw. 
   - For an example, `experiment_records.txt` is shown below:
@@ -73,6 +65,14 @@ The specific usage is as follows:
 06-29-21-47-ROG-30-outdoors
 06-30-17-14-ROG-40-outdoors
 ```
+
+**We also provide the `./scripts/draw_microevent.py` script for drawing Figure 8 in our paper.**
+The `./scripts/draw_microevent.py` script takes three parameters: the location of the ROG experiment results to be drawn, rank of the device to be drawn, the start time.
+The rank can only be a positive integer, because the device whose rank is 0 is the parameter server, and the start time is needed because the whole experiment will take 5,000 seconds or more, so it will be hard to see the details in the whole figure.
+So, the `python3 ./scripts/draw_microevent.py ./result/06-28-02-20-ROG-4-outdoors 1 300` command
+will draw the micro-event on the device whose rank is 1 after 300 seconds.
+**You may need to adjust the device rank and the start time several times until you have a figure that is as clear and informative as Figure 8 in our paper.**
+
 ### Customization Settings
 To view available settings, run `python3 scripts/run.py --help` and change the parameters of `python3 scripts/run.py  ...` in `run_all.sh`. For example, you can evaluate end-to-end results in the indoor environment (Figure 6) by changing the command line argument of 'outdoors' to 'indoors' in run_all.sh.
 
