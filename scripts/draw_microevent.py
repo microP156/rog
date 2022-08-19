@@ -146,7 +146,7 @@ p1, = host.plot(bw_time,bw, linewidth=2,label="Bandwidth ")
 p2, = par1.plot(mta_time, mta,  "o-", markersize=4,linewidth=2,label="Transmission\n      Rate")
 p3, = par2.plot(staleness_time, staleness,"o-",  markersize=4,linewidth=2,label="Staleness")
 
-host.set_xlim(start_idx_time, start_idx_time+300)   # 坐标轴长度
+host.set_xlim(start_idx_time, start_idx_time+200)   # 坐标轴长度
 host.set_ylim(0, 130)
 par1.set_ylim(0, 120)
 par2.set_ylim(-0.5, threshold+0.5)
