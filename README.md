@@ -51,8 +51,8 @@ If the user accidentally terminates the command `bash run_all.sh` or wants to re
 
 ### Reproduce figures
 At the end of each evaluation item, Figure 1, Figure 9, and Figure 10 in our paper will be drawn automatically in the `./figure/` folder via `./scripts/draw_smooth.py` used in `run_all.sh`.
-The `./scripts/draw_smooth.py` script takes one parameter: the scenario of the executed experiment items, like `outdoors` or `indoors`.
-We do not recommend executing `./scripts/draw_smooth.py` separately, because this file will also record the executed experiment record under the same scenario in `experiment_records.txt`.
+The `./scripts/draw_smooth.py` script takes one parameter: the case of the executed experiment items, like `outdoors` or `indoors`.
+We do not recommend executing `./scripts/draw_smooth.py` separately, because this file will also record the executed experiment record under the same caseo in `experiment_records.txt`.
 Instead, the users can redraw the result figures via `./scripts/redraw_smooth.py`. 
 The specific usage is as follows:
   - Check `experiment_records.txt` to find which case to redraw. 
