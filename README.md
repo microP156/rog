@@ -7,7 +7,7 @@ This repository contains codes and materials for artifact evaluation of paper **
 	* 1.2. [Raw Installation](#RawInstallation)
 * 2. [Experiment Workflow](#ExperimentWorkflow)
 * 3. [Reproducing Figures](#ReproducingFigures)
-	* 3.1.  [AutomaticallyGeneratedFigures](#AutomaticallyGeneratedFigures)	
+	* 3.1.  [Automatically Generated Figures](#AutomaticallyGeneratedFigures)	
 	* 3.2. [MicroEvents](#MicroEvents)
 	* 3.3. [Customization Settings](#CustomizationSettings)
 * 4. [Notes](#Notes)
