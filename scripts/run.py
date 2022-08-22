@@ -33,7 +33,7 @@ wnic_names = ['wls1', 'wlx0013ef6f0c49', 'wlan0', 'wlan0', 'wlx0013ef5f09a3']
 hosts = [f'user@{host}' for host in hosts]
 hosts_set = list(sorted(set(hosts), key=hosts.index))  # remove duplicate but keep the order
 passward = "useruser"
-container_name = "ROG"
+container_name = "rog"
 rerun = True
 subps = []  # all subprocesses started by me
 
