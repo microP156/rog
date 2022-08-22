@@ -7,9 +7,10 @@ This repository contains codes and materials for artifact evaluation of paper **
 	* 1.2. [Raw Installation](#RawInstallation)
 * 2. [Experiment Workflow](#ExperimentWorkflow)
 * 3. [Reproducing Figures](#ReproducingFigures)
-	* 3.1. [MicroEvents](#MicroEvents)
-	* 3.2. [Customization Settings](#CustomizationSettings)
-* 4. [Note](#Note)
+	* 3.1.  [AutomaticallyGeneratedFigures](#AutomaticallyGeneratedFigures)	
+	* 3.2. [MicroEvents](#MicroEvents)
+	* 3.3. [Customization Settings](#CustomizationSettings)
+* 4. [Notes](#Notes)
 	* 4.1. [Possible Randomness in Results](#PossibleRandomnessinResults)
 	* 4.2. [Dataset](#Dataset)
 	* 4.3. [Model](#Model)
@@ -59,6 +60,7 @@ Then, the accuracies of all checkpointed models will be tested and stored in `ac
 If the user accidentally terminates the command `bash run_all.sh` or wants to restart the half-run experiments, please delete the result folders of the experiments that have been executed in `./result` folder or comment out the commands that have already been executed in `run_all.sh` to avoid confusion with later experiment results.
 
 ##  3. <a name='ReproducingFigures'></a>Reproducing Figures
+### 3.1 <a name='AutomaticallyGeneratedFigures'></a>Automatically Generated Figures
 At the end of each evaluation item, Figure 1, Figure 9, and Figure 10 in our paper will be drawn **automatically** in the `./figure/` folder via `./scripts/draw_smooth.py` used in `run_all.sh`.
 The `./scripts/draw_smooth.py` script takes one parameter: the case of the executed experiment items, like `outdoors` or `indoors`.
 
@@ -76,7 +78,7 @@ The specific usage is as follows:
 06-29-21-47-ROG-30-outdoors
 06-30-17-14-ROG-40-outdoors
 ```
-###  3.1. <a name='MicroEvents'></a>MicroEvents
+###  3.2. <a name='MicroEvents'></a>MicroEvents
 **We also provide the `./scripts/draw_microevent.py` script for drawing Figure 8 (microevents) in our paper.**
 This script takes three parameters: the location of the ROG experiment results to be drawn, rank of the device to be drawn, and the start time.
 The rank can only be a positive integer, because the device whose rank is 0 is the parameter server, and we show the microevents of the device for 5 minutes starting from the given start time. Since the training process takes a long time (over 60 minutes), drawing microevents of the whole training process would hide all the details of the figure so we choose to draw a slice of the training process.
@@ -88,7 +90,7 @@ which will draw the microevents on the device whose rank is 1 starting from the 
 **You may need to adjust the start time and then re-run the script several times to find informative microevents.**
 
 
-###  3.2. <a name='CustomizationSettings'></a>Customization Settings
+###  3.3. <a name='CustomizationSettings'></a>Customization Settings
 To view available settings, run `python3 scripts/run.py --help` and change the parameters of `python3 scripts/run.py  ...` in `run_all.sh`. For example, you can evaluate end-to-end results in the indoor environment (Figure 6) by changing the command line argument of 'outdoors' to 'indoors' in run_all.sh.
 
 Available options are:
@@ -104,7 +106,7 @@ Available options are:
 ```  
 -  Since the ROG needs to calculate MTA(a key parameter for ROG) according to the threshold, we only calculate the results whose threshold is less than or equal to 40 for simplicity, so the threshold of the ROG cannot exceed 40.
 -  Default batchsizes were set to ensure the same computation time on heterogeneous devices. If all worker devices are homogeneous, please set all elements in the `batch_size` in `./scripts/run.py` to any same integer in line 41.
-##  4. <a name='Note'></a>Note
+##  4. <a name='Notes'></a>Notes
 ###  4.1. <a name='PossibleRandomnessinResults'></a>Possible Randomness in Results
 Because we are using momentum to accelerate training (otherwise convergence would take days of time), randomness in training process (especially at the beginning) would be inevitably introduced by the training algorithm and bring a drop in training accuracy at the beginning.
 For fair comparison, we recommend running each case multiple times and selected those without such drop at the beginning.
