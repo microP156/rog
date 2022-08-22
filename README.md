@@ -9,7 +9,7 @@ This repository contains codes and materials for artifact evaluation of paper **
 * 3. [Reproducing Figures](#ReproducingFigures)
 	* 3.1. [MicroEvents](#MicroEvents)
 	* 3.2. [Customization Settings](#CustomizationSettings)
-* 4. [Note:](#Note:)
+* 4. [Note](#Note)
 	* 4.1. [Possible Randomness in Results](#PossibleRandomnessinResults)
 	* 4.2. [Dataset](#Dataset)
 	* 4.3. [Model](#Model)
@@ -104,7 +104,7 @@ Available options are:
 ```  
 -  Since the ROG needs to calculate MTA(a key parameter for ROG) according to the threshold, we only calculate the results whose threshold is less than or equal to 40 for simplicity, so the threshold of the ROG cannot exceed 40.
 -  Default batchsizes were set to ensure the same computation time on heterogeneous devices. If all worker devices are homogeneous, please set all elements in the `batch_size` in `./scripts/run.py` to any same integer in line 41.
-##  4. <a name='Note:'></a>Note: 
+##  4. <a name='Note'></a>Note
 ###  4.1. <a name='PossibleRandomnessinResults'></a>Possible Randomness in Results
 Because we are using momentum to accelerate training (otherwise convergence would take days of time), randomness in training process (especially at the beginning) would be inevitably introduced by the training algorithm and bring a drop in training accuracy at the beginning.
 For fair comparison, we recommend running each case multiple times and selected those without such drop at the beginning.
