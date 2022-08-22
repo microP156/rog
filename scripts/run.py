@@ -33,6 +33,7 @@ wnic_names = ['wls1', 'wlx0013ef6f0c49', 'wlan0', 'wlan0', 'wlx0013ef5f09a3']
 hosts = [f'user@{host}' for host in hosts]
 hosts_set = list(sorted(set(hosts), key=hosts.index))  # remove duplicate but keep the order
 passward = "useruser"
+container_name = "ROG"
 rerun = True
 subps = []  # all subprocesses started by me
 
@@ -57,7 +58,7 @@ else:
 def cleanup():
     print('cleaning')
     for host in hosts_set:
-        exec_ssh(host, 'docker stop -t 1 multi_robot_rl', block=True)
+        exec_ssh(host, f'docker stop -t 1 {container_name}', block=True)
     for p in subps:
         tmp = ' '
         print(f'killing "{tmp.join(p.args)}"')
@@ -99,14 +100,14 @@ def exec_ssh(host, command, block=False):
 
 
 def exec_docker(host, command, block=False):
-    command = f'docker exec -t multi_robot_rl bash -c "{command}"'
+    command = f'docker exec -t {container_name} bash -c "{command}"'
     return exec_ssh(host, command, block=block)
 
 while rerun:
     rerun = False
     print('restarting all containers')
     for host in hosts_set:
-        ret = exec_ssh(host, 'docker restart -t 1 multi_robot_rl', block=True)
+        ret = exec_ssh(host, f'docker restart -t 1 {container_name}', block=True)
         if ret != 0:
             print("restart device")
             exec_ssh(host,f"echo \"{passward}\" | sudo -S reboot",block=True)
